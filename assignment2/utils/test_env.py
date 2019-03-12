@@ -57,3 +57,8 @@ class EnvTest(object):
 
     def render(self):
         print(self.cur_state)
+
+
+if __name__ == "__main__":
+    test_env = EnvTest()
+    print(test_env.observation_space.states)

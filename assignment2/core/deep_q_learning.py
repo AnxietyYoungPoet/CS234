@@ -62,7 +62,6 @@ class DQN(QN):
         """
         state = tf.cast(state, tf.float32)
         state /= self.config.high
-
         return state
 
 

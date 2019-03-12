@@ -83,7 +83,6 @@ class LinearExploration(LinearSchedule):
     if roll < self.epsilon:
       return self.env.action_space.sample()
     return best_action
-
     ##############################################################
     ######################## END YOUR CODE #######################
 
