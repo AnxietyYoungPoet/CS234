@@ -92,7 +92,7 @@ class Linear(DQN):
     ##############################################################
     ################ YOUR CODE HERE - 2-3 lines ################## 
     with tf.variable_scope(scope, reuse=reuse):
-      out = tf.layers.dense(tf.layers.flatten(state), num_actions)
+      out = tf.layers.dense(tf.contrib.layers.flatten(state), num_actions)
     ##############################################################
     ######################## END YOUR CODE #######################
 

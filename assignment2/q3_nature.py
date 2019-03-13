@@ -58,7 +58,7 @@ class NatureQN(Linear):
       conv1 = tf.layers.conv2d(state, 32, 8, 4, activation=tf.nn.relu)
       conv2 = tf.layers.conv2d(conv1, 64, 4, 2, activation=tf.nn.relu)
       conv3 = tf.layers.conv2d(conv2, 64, 3, activation=tf.nn.relu)
-      aligned = tf.layers.flatten(conv3)
+      aligned = tf.contrib.layers.flatten(conv3)
       fc1 = tf.layers.dense(aligned, 512, activation=tf.nn.relu)
       out = tf.layers.dense(fc1, num_actions)
     ##############################################################
