@@ -50,10 +50,10 @@ class Linear(DQN):
     ##############################################################
     ################YOUR CODE HERE (6-15 lines) ##################
     h, w, c = state_shape
-    self.s = tf.placeholder(dtype=tf.uint8, shape=[None, h, w, c * config.state_history])
+    self.s = tf.placeholder(dtype=tf.uint8, shape=[None, h, w, config.state_history])
     self.a = tf.placeholder(dtype=tf.int32, shape=[None])
     self.r = tf.placeholder(dtype=tf.float32, shape=[None])
-    self.sp = tf.placeholder(dtype=tf.uint8, shape=[None, h, w, c * config.state_history])
+    self.sp = tf.placeholder(dtype=tf.uint8, shape=[None, h, w, config.state_history])
     self.done_mask = tf.placeholder(dtype=tf.bool, shape=[None])
     self.lr = tf.placeholder(dtype=tf.float32)
     ##############################################################
@@ -92,7 +92,7 @@ class Linear(DQN):
     ##############################################################
     ################ YOUR CODE HERE - 2-3 lines ################## 
     with tf.variable_scope(scope, reuse=reuse):
-      out = tf.layers.dense(layers.flatten(state), num_actions)
+      out = layers.fully_connected(layers.flatten(state), num_actions, activation_fn=None)
     ##############################################################
     ######################## END YOUR CODE #######################
 
@@ -213,7 +213,7 @@ class Linear(DQN):
     """
     ##############################################################
     #################### YOUR CODE HERE - 8-12 lines #############
-    adam = tf.train.AdamOptimizer()
+    adam = tf.train.AdamOptimizer(self.lr)
     params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
     grads= adam.compute_gradients(self.loss, var_list=params)
     if self.config.grad_clip:
