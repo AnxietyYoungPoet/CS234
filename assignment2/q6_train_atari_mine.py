@@ -7,7 +7,7 @@ from utils.wrappers import PreproWrapper, MaxAndSkipEnv
 from q1_schedule import LinearExploration, LinearSchedule
 from q2_linear import Linear
 
-from configs.q5_train_atari_nature import config
+from configs.q6_bonus_question import config
 
 
 class MyDQN(Linear):
