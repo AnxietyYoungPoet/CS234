@@ -144,6 +144,7 @@ class QN(object):
     def train(self, exp_schedule, lr_schedule):
         """
         Performs training of Q
+        called only once
 
         Args:
             exp_schedule: Exploration instance s.t.
@@ -160,7 +161,7 @@ class QN(object):
 
         t = last_eval = last_record = 0 # time control of nb of steps
         scores_eval = [] # list of scores computed at iteration time
-        scores_eval += [self.evaluate()]
+        scores_eval += [self.evaluate()]  # eval before training
         
         prog = Progbar(target=self.config.nsteps_train)
 
@@ -279,7 +280,7 @@ class QN(object):
         if env is None:
             env = self.env
 
-        # replay memory to play
+        # replay memory to play, stack frames
         replay_buffer = ReplayBuffer(self.config.buffer_size, self.config.state_history)
         rewards = []
 

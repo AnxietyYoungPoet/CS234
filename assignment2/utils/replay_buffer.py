@@ -22,6 +22,7 @@ class ReplayBuffer(object):
         The sepecific memory optimizations use here are:
             - only store each frame once rather than k times
               even if every observation normally consists of k last frames
+              Fectch last k frames from the memory buffer, cuz these transitions are stored in sequence
             - store frames as np.uint8 (actually it is most time-performance
               to cast them back to float32 on GPU to minimize memory transfer
               time)
@@ -190,5 +191,5 @@ class ReplayBuffer(object):
         """
         self.action[idx] = action
         self.reward[idx] = reward
-        self.done[idx]   = done
+        self.done[idx]   = done  # store only one frame, use the done and index to indicate next frame
 

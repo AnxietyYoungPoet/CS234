@@ -14,7 +14,7 @@ class MaxAndSkipEnv(gym.Wrapper):
         """Return only every `skip`-th frame"""
         super(MaxAndSkipEnv, self).__init__(env)
         # most recent raw observations (for max pooling across time steps)
-        self._obs_buffer = deque(maxlen=2)
+        self._obs_buffer = deque(maxlen=2)  # pooling over last 2 frames
         self._skip       = skip
 
     def step(self, action):
