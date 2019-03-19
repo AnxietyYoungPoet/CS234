@@ -22,6 +22,7 @@ parser.add_argument('--baseline', dest='use_baseline', action='store_true')
 parser.add_argument('--no-baseline', dest='use_baseline', action='store_false')
 parser.set_defaults(use_baseline=True)
 
+
 def build_mlp(
           mlp_input,
           output_size,
@@ -54,7 +55,12 @@ def build_mlp(
   """
   #######################################################
   #########   YOUR CODE HERE - 7-20 lines.   ############
-  return # TODO
+  with tf.variable_scope(scope):
+    hidden = mlp_input
+    for _ in range(n_layers):
+      hidden = tf.layers.dense(hidden, size, activation=tf.nn.relu)
+    out = tf.layers.dense(hidden, output_size, activation=output_activation)
+  return out
   #######################################################
   #########          END YOUR CODE.          ############
 
@@ -63,6 +69,7 @@ class PG(object):
   """
   Abstract Class for implementing a Policy Gradient Based Algorithm
   """
+
   def __init__(self, env, config, logger=None):
     """
     Initialize Policy Gradient Class
@@ -111,18 +118,18 @@ class PG(object):
     """
     #######################################################
     #########   YOUR CODE HERE - 8-12 lines.   ############
-    self.observation_placeholder = # TODO
+    self.observation_placeholder = tf.placeholder(tf.float32, [None, self.observation_dim], 'ob_ph')
     if self.discrete:
-      self.action_placeholder = # TODO
+      self.action_placeholder = tf.placeholder(tf.int32, [None], 'ac_ph')
     else:
-      self.action_placeholder = # TODO
+      self.action_placeholder = tf.placeholder(tf.float32, [None, self.action_dim], 'ac_ph')
 
     # Define a placeholder for advantages
-    self.advantage_placeholder = # TODO
+    self.advantage_placeholder = tf.placeholder(tf.float32, [None], 'ad_ph')
     #######################################################
     #########          END YOUR CODE.          ############
 
-  def build_policy_network_op(self, scope = "policy_network"):
+  def build_policy_network_op(self, scope="policy_network"):
     """
     Build the policy network, construct the tensorflow operation to sample
     actions from the policy network outputs, and compute the log probabilities
@@ -171,16 +178,24 @@ class PG(object):
     """
     #######################################################
     #########   YOUR CODE HERE - 5-10 lines.   ############
-
     if self.discrete:
-      action_logits =         # TODO
-      self.sampled_action =   # TODO
-      self.logprob =          # TODO
+      action_logits = build_mlp(
+        self.observation_placeholder, self.action_dim, scope,
+        self.config.n_layers, self.config.layer_size, self.config.activation
+      )
+      self.sampled_action = tf.reshape(tf.multinomial(action_logits, 1), [-1])
+      self.logprob = -tf.nn.sparse_softmax_cross_entropy_with_logits(
+        labels=self.action_placeholder, logits=action_logits)
     else:
-      action_means =          # TODO
-      log_std =               # TODO
-      self.sampled_action =   # TODO
-      self.logprob =          # TODO
+      action_means = build_mlp(
+        self.observation_placeholder, self.action_dim, scope,
+        self.config.n_layers, self.config.layer_size, self.config.activation
+      )
+      log_std = tf.get_variable("std", [self.action_dim], dtype=tf.float32)
+      self.sampled_action = tf.random_normal(
+        shape=tf.shape(action_means), mean=action_means, stddev=tf.exp(log_std))
+      self.logprob = tf.contrib.distributions.MultivariateNormalDiag(
+        loc=action_means, scale_diag=tf.exp(log_std)).log_prob(self.action_placeholder)
     #######################################################
     #########          END YOUR CODE.          ############
 
@@ -201,7 +216,7 @@ class PG(object):
 
     ######################################################
     #########   YOUR CODE HERE - 1-2 lines.   ############
-    self.loss = # TODO
+    self.loss = tf.reduce_mean(-self.logprob * self.advantage_placeholder)
     #######################################################
     #########          END YOUR CODE.          ############
 
@@ -212,11 +227,11 @@ class PG(object):
     """
     ######################################################
     #########   YOUR CODE HERE - 1-2 lines.   ############
-    self.train_op = # TODO
+    self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
     #######################################################
     #########          END YOUR CODE.          ############
 
-  def add_baseline_op(self, scope = "baseline"):
+  def add_baseline_op(self, scope="baseline"):
     """
     Build the baseline network within the scope.
 
@@ -241,9 +256,11 @@ class PG(object):
     """
     ######################################################
     #########   YOUR CODE HERE - 4-8 lines.   ############
-    self.baseline = # TODO
-    self.baseline_target_placeholder = # TODO
-    self.update_baseline_op = # TODO
+    self.baseline = tf.squeeze(build_mlp(
+      self.observation_placeholder, 1, scope, self.config.n_layers, self.config.layer_size))
+    self.baseline_target_placeholder = tf.placeholder(tf.float32, [None], 'base_ph')
+    self.update_baseline_op = tf.train.AdamOptimizer(self.lr).minimize(
+      tf.losses.mean_squared_error(self.baseline_target_placeholder, self.baseline))
     #######################################################
     #########          END YOUR CODE.          ############
 
@@ -304,7 +321,7 @@ class PG(object):
 
     # logging
     self.merged = tf.summary.merge_all()
-    self.file_writer = tf.summary.FileWriter(self.config.output_path,self.sess.graph)
+    self.file_writer = tf.summary.FileWriter(self.config.output_path, self.sess.graph)
 
   def init_averages(self):
     """
@@ -351,7 +368,7 @@ class PG(object):
     # tensorboard stuff
     self.file_writer.add_summary(summary, t)
 
-  def sample_path(self, env, num_episodes = None):
+  def sample_path(self, env, num_episodes=None):
     """
     Sample paths (trajectories) from the environment.
 
@@ -384,7 +401,8 @@ class PG(object):
 
       for step in range(self.config.max_ep_len):
         states.append(state)
-        action = self.sess.run(self.sampled_action, feed_dict={self.observation_placeholder : states[-1][None]})[0]
+        action = self.sess.run(
+          self.sampled_action, feed_dict={self.observation_placeholder: states[-1][None]})[0]
         state, reward, done, info = env.step(action)
         actions.append(action)
         rewards.append(reward)
@@ -396,9 +414,9 @@ class PG(object):
         if (not num_episodes) and t == self.config.batch_size:
           break
 
-      path = {"observation" : np.array(states),
-                      "reward" : np.array(rewards),
-                      "action" : np.array(actions)}
+      path = {"observation": np.array(states),
+              "reward": np.array(rewards),
+              "action": np.array(actions)}
       paths.append(path)
       episode += 1
       if num_episodes and episode >= num_episodes:
@@ -433,7 +451,9 @@ class PG(object):
       rewards = path["reward"]
       #######################################################
       #########   YOUR CODE HERE - 5-10 lines.   ############
-      returns = # TODO
+      max_step = len(rewards)
+      returns = [np.sum(
+        np.power(config.gamma, np.arange(max_step - t)) * rewards[t:]) for t in range(max_step)]
       #######################################################
       #########          END YOUR CODE.          ############
       all_returns.append(returns)
@@ -472,9 +492,12 @@ class PG(object):
     #######################################################
     #########   YOUR CODE HERE - 5-10 lines.   ############
     if self.config.use_baseline:
-      # TODO
+      b_n = self.sess.run(self.baseline, feed_dict={self.observation_placeholder: observations})
+      adv = adv - b_n
     if self.config.normalize_advantage:
-      # TODO
+      adv_mean = np.mean(adv, axis=0)
+      adv_std = np.std(adv, axis=0)
+      adv = (adv - adv_mean) / (adv_std + 1e-7)  # TODO
     #######################################################
     #########          END YOUR CODE.          ############
     return adv
@@ -492,7 +515,10 @@ class PG(object):
     """
     #######################################################
     #########   YOUR CODE HERE - 1-5 lines.   ############
-    pass # TODO
+    self.sess.run(
+      self.update_baseline_op,
+      feed_dict={
+        self.observation_placeholder: observations, self.baseline_target_placeholder: returns})
     #######################################################
     #########          END YOUR CODE.          ############
 
