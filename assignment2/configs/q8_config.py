@@ -2,7 +2,7 @@ class config():
     # env config
     render_train     = False
     render_test      = False
-    env_name         = "SpaceInvadersNoFrameskip-v4"
+    env_name         = "BreakoutNoFrameskip-v4"
     overwrite_render = True
     record           = True
     high             = 255.
