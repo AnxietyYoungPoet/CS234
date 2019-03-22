@@ -188,6 +188,7 @@ class QN(object):
 
         # perform action in env
         new_state, reward, done, info = self.env.step(action)
+        reward = np.clip(reward, -1, 1)
 
         # store the transition
         replay_buffer.store_effect(idx, action, reward, done)
@@ -203,8 +204,8 @@ class QN(object):
           exp_schedule.update(t)
           lr_schedule.update(t)
           if len(rewards) > 0:
-            prog.update(t + 1, exact=[("Loss", loss_eval), ("Avg_R", self.avg_reward), 
-                    ("Max_R", np.max(rewards)), ("eps", exp_schedule.epsilon), 
+            prog.update(t + 1, exact=[("Loss", loss_eval), ("Avg_R", np.mean(rewards)), 
+                    ("Max_R", int(np.max(rewards))), ("eps", exp_schedule.epsilon), 
                     ("Grads", grad_eval), ("Max_Q", self.max_q), 
                     ("lr", lr_schedule.epsilon)])
 

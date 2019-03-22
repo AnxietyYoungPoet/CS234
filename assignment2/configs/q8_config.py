@@ -2,13 +2,13 @@ class config():
     # env config
     render_train     = False
     render_test      = False
-    env_name         = "Pong-v0"
+    env_name         = "SpaceInvadersNoFrameskip-v4"
     overwrite_render = True
     record           = True
     high             = 255.
 
     # output config
-    output_path  = "results/q8/"
+    output_path  = "results/" + env_name + "/"
     model_output = output_path + "model.weights/"
     log_path     = output_path + "log.txt"
     plot_output  = output_path + "scores.png"
