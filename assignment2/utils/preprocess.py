@@ -13,7 +13,7 @@ def greyscale(state):
     state = state[:, :, 0] * 0.299 + state[:, :, 1] * 0.587 + state[:, :, 2] * 0.114
 
     # karpathy
-    state = state[35:195]  # crop
+    state = state[31:195]  # crop
     # state = state[::2,::2] # downsample by factor of 2
     state = np.asarray(Image.fromarray(state).resize((84, 84), Image.BILINEAR))
 

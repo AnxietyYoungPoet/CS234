@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # make env
     env = gym.make(config.env_name)
     env = MaxAndSkipEnv(env, skip=config.skip_frame)
-    env = PreproWrapper(env, prepro=greyscale, shape=(80, 80, 1), 
+    env = PreproWrapper(env, prepro=greyscale, shape=(84, 84, 1), 
                         overwrite_render=config.overwrite_render)
 
     # exploration strategy
