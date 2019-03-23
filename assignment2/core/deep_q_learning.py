@@ -181,7 +181,7 @@ class DQN(QN):
       # inputs
       self.s: s_batch,
       self.a: a_batch,
-      self.r: r_batch,
+      self.r: np.sign(r_batch),
       self.sp: sp_batch, 
       self.done_mask: done_mask_batch,
       self.lr: lr, 

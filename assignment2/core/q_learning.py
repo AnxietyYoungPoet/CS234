@@ -188,7 +188,6 @@ class QN(object):
 
         # perform action in env
         new_state, reward, done, info = self.env.step(action)
-        reward = np.clip(reward, -1, 1)
 
         # store the transition
         replay_buffer.store_effect(idx, action, reward, done)
